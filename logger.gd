@@ -1,3 +1,120 @@
+"""
+Godot Logger - A comprehensive logging system for Godot 4
+
+This logger provides multiple log levels, colored console output, file logging,
+and trace logging capabilities. It's designed to be easy to use while providing
+powerful debugging and monitoring features.
+
+LOG LEVELS:
+- CRITICAL (0): Critical errors that may cause application failure
+- ERROR (1): Errors that prevent normal operation
+- WARNING (2): Warnings about potential issues
+- INFO (3): General information messages
+- DEBUG (4): Detailed debugging information
+
+BASIC USAGE:
+
+1. Create a logger instance:
+   var logger = Logger.new(Logger.INFO, "MyClass", "instance_name")
+   
+   Parameters:
+   - level: Initial log level (default: DEBUG)
+   - instance_of: Class/component name (default: "")
+   - id: Instance identifier (default: null)
+
+2. Log messages:
+   logger.critical("Critical error occurred!")
+   logger.error("Something went wrong")
+   logger.warning("This might be a problem")
+   logger.info("General information")
+   logger.debug("Debug details")
+
+3. Enable file logging:
+   logger.enable_file_logging([Logger.CRITICAL, Logger.ERROR, Logger.WARNING])
+   
+   This will write specified log levels to timestamped files in user://logs/
+
+TRACE LOGGING:
+
+Trace logging allows you to log specific events for debugging without cluttering
+the console. Traces are only shown when explicitly enabled.
+
+1. Log trace events:
+   logger.trace("physics_step", "Starting physics calculation")
+   logger.trace("collision_detected", "Player hit enemy")
+   
+2. Enable specific traces:
+   Logger.enable_trace("physics_step")
+   Logger.enable_trace("collision_detected")
+   
+3. Disable traces:
+   Logger.disable_trace("physics_step")
+
+EXAMPLE USAGE PATTERNS:
+
+1. Basic class logging:
+   var logger: Logger
+   
+   func _ready():
+       logger = Logger.new(Logger.INFO, "Player", name)
+       logger.info("Player initialized")
+   
+   func take_damage(amount: int):
+       logger.warning("Player took %d damage" % amount)
+       if health <= 0:
+           logger.critical("Player died!")
+
+2. Physics/logic debugging:
+   func _physics_process(delta: float):
+       logger.trace("physics_step", "Starting physics step with delta: %s" % delta)
+       
+       # Your physics code here
+       
+       logger.trace("physics_step", "Physics step completed")
+
+3. File logging for critical events:
+   func _ready():
+       logger = Logger.new(Logger.INFO, "GameManager", "main")
+       logger.enable_file_logging([Logger.CRITICAL, Logger.ERROR, Logger.WARNING])
+
+4. Dynamic level control:
+   # Set level for specific logger
+   logger.set_level(Logger.WARNING)
+   
+   # Set default level for new loggers
+   Logger.set_default_level(Logger.INFO)
+
+5. Instance management:
+   # Change logger instance name
+   logger.set_instance_name("NewName")
+   
+   # Get all registered loggers
+   var loggers = Logger.get_logger_instances()
+   
+   # Set level for specific logger by instance key
+   Logger.set_logger_level("Player#001", Logger.DEBUG)
+
+OUTPUT FORMAT:
+Console output includes:
+- Timestamp: [HH:MM:SS]
+- Level: [LEVEL] in colored text
+- File info: path/filename:line
+- Instance info: (ClassName#id)
+- Message
+
+File output is the same but without BBCode formatting.
+
+LOG FILES:
+Log files are stored in user://logs/YYYY-MM-DD_HH-MM-SS/ with filenames
+matching the logger instance (e.g., "Player#001.log").
+
+TIPS:
+- Use trace logging for frequent events like physics steps
+- Enable file logging only for important levels to avoid disk space issues
+- Use descriptive instance names and IDs for better organization
+- Consider disabling debug logging in production builds
+- Use trace logging for performance-critical debugging
+"""
 extends RefCounted
 class_name Logger
 
@@ -65,7 +182,7 @@ func _get_instance_key() -> String:
 	var key = _instance_of
 	if _id is String:
 		key += _id
-	elif _id != null:
+	elif _id is float or _id is int:
 		key += "#%03d" % _id
 	return key
 
@@ -255,7 +372,7 @@ func _format_message(level_or_trace: Variant, message_or_value: Variant) -> Stri
 		var instance_str = "(%s" % _instance_of
 		if _id is String:
 			instance_str += _id
-		elif _id != null:
+		elif _id is float or _id is int:
 			instance_str += "#%03d" % _id
 		instance_str += ")"
 		log_parts.append(instance_str)
