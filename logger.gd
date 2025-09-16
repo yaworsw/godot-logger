@@ -15,7 +15,7 @@ LOG LEVELS:
 BASIC USAGE:
 
 1. Create a logger instance:
-   var logger = Logger.new(Logger.INFO, "MyClass", "instance_name")
+   var logger = GameLogger.new(GameLogger.INFO, "MyClass", "instance_name")
    
    Parameters:
    - level: Initial log level (default: DEBUG)
@@ -30,7 +30,7 @@ BASIC USAGE:
    logger.debug("Debug details")
 
 3. Enable file logging:
-   logger.enable_file_logging([Logger.CRITICAL, Logger.ERROR, Logger.WARNING])
+   logger.enable_file_logging([GameLogger.CRITICAL, GameLogger.ERROR, GameLogger.WARNING])
    
    This will write specified log levels to timestamped files in user://logs/
 
@@ -44,55 +44,55 @@ the console. Traces are only shown when explicitly enabled.
    logger.trace("collision_detected", "Player hit enemy")
    
 2. Enable specific traces:
-   Logger.enable_trace("physics_step")
-   Logger.enable_trace("collision_detected")
+   GameLogger.enable_trace("physics_step")
+   GameLogger.enable_trace("collision_detected")
    
 3. Disable traces:
-   Logger.disable_trace("physics_step")
+   GameLogger.disable_trace("physics_step")
 
 EXAMPLE USAGE PATTERNS:
 
 1. Basic class logging:
-   var logger: Logger
+   var logger: GameLogger
    
    func _ready():
-       logger = Logger.new(Logger.INFO, "Player", name)
-       logger.info("Player initialized")
+	   logger = GameLogger.new(GameLogger.INFO, "Player", name)
+	   logger.info("Player initialized")
    
    func take_damage(amount: int):
-       logger.warning("Player took %d damage" % amount)
-       if health <= 0:
-           logger.critical("Player died!")
+	   logger.warning("Player took %d damage" % amount)
+	   if health <= 0:
+		   logger.critical("Player died!")
 
 2. Physics/logic debugging:
    func _physics_process(delta: float):
-       logger.trace("physics_step", "Starting physics step with delta: %s" % delta)
-       
-       # Your physics code here
-       
-       logger.trace("physics_step", "Physics step completed")
+	   logger.trace("physics_step", "Starting physics step with delta: %s" % delta)
+	   
+	   # Your physics code here
+	   
+	   logger.trace("physics_step", "Physics step completed")
 
 3. File logging for critical events:
    func _ready():
-       logger = Logger.new(Logger.INFO, "GameManager", "main")
-       logger.enable_file_logging([Logger.CRITICAL, Logger.ERROR, Logger.WARNING])
+	   logger = GameLogger.new(GameLogger.INFO, "GameManager", "main")
+	   logger.enable_file_logging([GameLogger.CRITICAL, GameLogger.ERROR, GameLogger.WARNING])
 
 4. Dynamic level control:
    # Set level for specific logger
-   logger.set_level(Logger.WARNING)
+   logger.set_level(GameLogger.WARNING)
    
    # Set default level for new loggers
-   Logger.set_default_level(Logger.INFO)
+   GameLogger.set_default_level(GameLogger.INFO)
 
 5. Instance management:
    # Change logger instance name
    logger.set_instance_name("NewName")
    
    # Get all registered loggers
-   var loggers = Logger.get_logger_instances()
+   var loggers = GameLogger.get_logger_instances()
    
    # Set level for specific logger by instance key
-   Logger.set_logger_level("Player#001", Logger.DEBUG)
+   GameLogger.set_logger_level("Player#001", GameLogger.DEBUG)
 
 OUTPUT FORMAT:
 Console output includes:
@@ -116,7 +116,7 @@ TIPS:
 - Use trace logging for performance-critical debugging
 """
 extends RefCounted
-class_name Logger
+class_name GameLogger
 
 const CRITICAL = 0
 const ERROR = 1
