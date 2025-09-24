@@ -150,12 +150,18 @@ static var _file_log_levels: Dictionary = {}  # Track which levels are written t
 static var _log_folder = null  # Current log folder path
 static var _enabled_traces: Dictionary = {}  # Track which traces are enabled
 
+static var _id_counter: int = 0
+
 var _instance_of: String = ""
 var _id = null
 var _instance_file_log_levels: Array = []  # Which levels to write to file for this instance
 
 func _init(level: int = DEBUG, instance_of: String = "", id = null) -> void:
 	_instance_of = instance_of
+	
+	if id == null:
+		id = _id_counter
+		_id_counter += 1
 	_id = id
 	
 	# Register this logger instance
