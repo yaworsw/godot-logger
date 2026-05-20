@@ -149,12 +149,15 @@ static var _file_loggers: Dictionary = {}  # Track which loggers write to files
 static var _file_log_levels: Dictionary = {}  # Track which levels are written to files
 static var _log_folder = null  # Current log folder path
 static var _enabled_traces: Dictionary = {}  # Track which traces are enabled
+static var _instance_ref_counts: Dictionary = {}  # Track active RefCounted instances by key
 
 static var _id_counter: int = 0
 
 var _instance_of: String = ""
 var _id = null
 var _instance_file_log_levels: Array = []  # Which levels to write to file for this instance
+var _registered_instance_key: String = ""
+var _is_registered: bool = false
 
 func _init(level: int = DEBUG, instance_of: String = "", id = null) -> void:
 	_instance_of = instance_of
@@ -170,6 +173,37 @@ func _init(level: int = DEBUG, instance_of: String = "", id = null) -> void:
 		_logger_levels[instance_key] = level
 		_file_loggers[instance_key] = false
 		_file_log_levels[instance_key] = []
+	_instance_ref_counts[instance_key] = int(_instance_ref_counts.get(instance_key, 0)) + 1
+	_registered_instance_key = instance_key
+	_is_registered = true
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:
+		if _is_registered:
+			_unregister_instance(_registered_instance_key)
+			_registered_instance_key = ""
+			_instance_file_log_levels.clear()
+			_is_registered = false
+
+func dispose() -> void:
+	if not _is_registered:
+		return
+	_unregister_instance(_registered_instance_key)
+	_registered_instance_key = ""
+	_instance_file_log_levels.clear()
+	_is_registered = false
+
+static func _unregister_instance(instance_key: String) -> void:
+	if instance_key.is_empty():
+		return
+	var ref_count = int(_instance_ref_counts.get(instance_key, 0)) - 1
+	if ref_count > 0:
+		_instance_ref_counts[instance_key] = ref_count
+		return
+	_instance_ref_counts.erase(instance_key)
+	_logger_levels.erase(instance_key)
+	_file_loggers.erase(instance_key)
+	_file_log_levels.erase(instance_key)
 
 # Enable trace logging for a specific trace name
 static func enable_trace(trace_name: String) -> void:
@@ -290,27 +324,25 @@ func disable_file_logging(levels: Array = []) -> void:
 # Change the instance name for this logger
 func set_instance_name(new_name: String) -> void:
 	var old_instance_key = _get_instance_key()
+	var level = _logger_levels.get(old_instance_key, _default_level)
+	var file_logging = _file_loggers.get(old_instance_key, false)
+	var file_levels = _file_log_levels.get(old_instance_key, [])
 	
 	# Update the instance name
 	_instance_of = new_name
 	
 	var new_instance_key = _get_instance_key()
+	if old_instance_key == new_instance_key:
+		return
 	
-	# Update the static tracking dictionaries
-	if _logger_levels.has(old_instance_key):
-		var level = _logger_levels[old_instance_key]
-		var file_logging = _file_loggers.get(old_instance_key, false)
-		var file_levels = _file_log_levels.get(old_instance_key, [])
-		
-		# Remove old entry
-		_logger_levels.erase(old_instance_key)
-		_file_loggers.erase(old_instance_key)
-		_file_log_levels.erase(old_instance_key)
-		
-		# Add new entry
+	_unregister_instance(old_instance_key)
+	if not _logger_levels.has(new_instance_key):
 		_logger_levels[new_instance_key] = level
 		_file_loggers[new_instance_key] = file_logging
 		_file_log_levels[new_instance_key] = file_levels
+	_instance_ref_counts[new_instance_key] = int(_instance_ref_counts.get(new_instance_key, 0)) + 1
+	_registered_instance_key = new_instance_key
+	_is_registered = true
 
 func _get_timestamp() -> String:
 	var datetime = Time.get_datetime_dict_from_system()
