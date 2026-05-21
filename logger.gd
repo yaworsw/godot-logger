@@ -221,7 +221,7 @@ static func is_trace_enabled(trace_name: String) -> bool:
 func _get_instance_key() -> String:
 	var key = _instance_of
 	if _id is String:
-		key += _id
+		key += "-" + str(_id)
 	elif _id is float or _id is int:
 		key += "#%03d" % _id
 	return key
@@ -229,7 +229,9 @@ func _get_instance_key() -> String:
 # Get the filename for this logger instance
 func _get_log_filename() -> String:
 	var filename = _instance_of
-	if _id != null:
+	if _id is String:
+		filename += "-" + str(_id)
+	elif _id is float or _id is int:
 		filename += "-%03d" % _id
 	return filename + ".log"
 
@@ -409,7 +411,7 @@ func _format_message(level_or_trace: Variant, message_or_value: Variant) -> Stri
 	if _instance_of != "":
 		var instance_str = "(%s" % _instance_of
 		if _id is String:
-			instance_str += _id
+			instance_str += "-" + str(_id)
 		elif _id is float or _id is int:
 			instance_str += "#%03d" % _id
 		instance_str += ")"
